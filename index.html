@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ЖабдықТасқын — Жеткізілімдерді есепке алу жүйесі</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold:#F5C500;
+    --black:#111010;
+    --bg:#171615;
+    --panel:#1F1E1C;
+    --panel-2:#26241f;
+    --border:#332F27;
+    --text:#F4F1E8;
+    --text-dim:#A9A296;
+    --danger:#E4572E;
+    --warn:#F5C500;
+    --ok:#7FB069;
+    --radius:4px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'DM Sans', sans-serif;
+    min-height:100vh;
+    display:flex;
+  }
+
+  /* ---------- Navigation ---------- */
+  nav{
+    width:220px;
+    background:var(--black);
+    border-right:1px solid var(--border);
+    padding:28px 0;
+    display:flex;
+    flex-direction:column;
+    flex-shrink:0;
+    min-height:100vh;
+  }
+  .logo{
+    font-family:'Bebas Neue', sans-serif;
+    font-size:28px;
+    letter-spacing:1px;
+    color:var(--gold);
+    padding:0 24px 28px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:12px;
+  }
+  .logo span{color:var(--text);}
+  .nav-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px 24px;
+    color:var(--text-dim);
+    cursor:pointer;
+    font-size:14px;
+    border-left:3px solid transparent;
+    transition:background .15s;
+  }
+  .nav-item:hover{background:#1c1a17; color:var(--text);}
+  .nav-item.active{
+    color:var(--gold);
+    border-left-color:var(--gold);
+    background:#1c1a17;
+  }
+
+  /* ---------- Main ---------- */
+  main{flex:1; padding:32px 40px; max-width:1200px;}
+  .page-title{
+    font-family:'Bebas Neue', sans-serif;
+    font-size:34px;
+    letter-spacing:.5px;
+    margin-bottom:24px;
+  }
+  .page{display:none;}
+  .page.active{display:block;}
+
+  /* ---------- Stat cards ---------- */
+  .stats-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+    gap:16px;
+    margin-bottom:28px;
+  }
+  .stat-card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:18px 20px;
+  }
+  .stat-card .num{
+    font-family:'Bebas Neue', sans-serif;
+    font-size:38px;
+    color:var(--gold);
+    line-height:1;
+  }
+  .stat-card.warn .num{color:var(--warn);}
+  .stat-card.danger .num{color:var(--danger);}
+  .stat-card .lbl{font-size:13px; color:var(--text-dim); margin-top:6px;}
+
+  .layout-2col{display:grid; grid-template-columns:1.6fr 1fr; gap:24px; align-items:start;}
+
+  /* ---------- Panel / Table ---------- */
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .panel-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:16px 20px;
+    border-bottom:1px solid var(--border);
+  }
+  .panel-header h2{font-size:16px; font-weight:600;}
+  input.search{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:8px 12px;
+    border-radius:var(--radius);
+    font-size:13px;
+    width:220px;
+  }
+  input.search:focus{outline:1px solid var(--gold);}
+
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  th{
+    text-align:left;
+    padding:10px 20px;
+    color:var(--text-dim);
+    font-weight:500;
+    font-size:12px;
+    border-bottom:1px solid var(--border);
+  }
+  td{padding:10px 20px; border-bottom:1px solid var(--border);}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:#1c1a17;}
+
+  a.mail{color:var(--gold); text-decoration:none;}
+  a.mail:hover{text-decoration:underline;}
+
+  .btn{
+    border:none;
+    border-radius:var(--radius);
+    padding:6px 12px;
+    font-size:12.5px;
+    cursor:pointer;
+    font-weight:600;
+    font-family:inherit;
+  }
+  .btn-edit{background:#3a3527; color:var(--gold);}
+  .btn-del{background:#3a2320; color:var(--danger);}
+  .btn-primary{background:var(--gold); color:var(--black);}
+  .btn:hover{filter:brightness(1.15);}
+
+  /* ---------- Badges ---------- */
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    padding:3px 9px;
+    border-radius:100px;
+    font-size:12px;
+    font-weight:600;
+  }
+  .badge.ok{background:rgba(127,176,105,.15); color:var(--ok);}
+  .badge.low{background:rgba(228,87,46,.15); color:var(--danger);}
+  .badge.status-draft{background:#332F27; color:var(--text-dim);}
+  .badge.status-confirmed{background:rgba(245,197,0,.15); color:var(--gold);}
+  .badge.status-received{background:rgba(127,176,105,.15); color:var(--ok);}
+  .badge.status-cancelled{background:rgba(228,87,46,.15); color:var(--danger);}
+
+  /* ---------- Stock progress bar ---------- */
+  .stock-cell{display:flex; flex-direction:column; gap:4px; min-width:110px;}
+  .bar-track{background:#332F27; border-radius:100px; height:6px; overflow:hidden;}
+  .bar-fill{height:100%; border-radius:100px;}
+  .bar-fill.low{background:var(--danger);}
+  .bar-fill.warn{background:var(--gold);}
+  .bar-fill.ok{background:var(--ok);}
+
+  /* ---------- Alerts list ---------- */
+  .alert-list{list-style:none;}
+  .alert-item{
+    display:flex;
+    gap:10px;
+    padding:14px 20px;
+    border-bottom:1px solid var(--border);
+    align-items:flex-start;
+  }
+  .alert-item:last-child{border-bottom:none;}
+  .dot{width:9px; height:9px; border-radius:50%; margin-top:5px; flex-shrink:0;}
+  .dot.low_stock{background:var(--danger);}
+  .dot.overdue_delivery{background:var(--gold);}
+  .alert-text{font-size:13px; line-height:1.4;}
+  .alert-time{font-size:11px; color:var(--text-dim); margin-top:2px;}
+  .resolve-btn{
+    margin-left:auto; background:none; border:1px solid var(--border);
+    color:var(--text-dim); border-radius:var(--radius); padding:4px 8px;
+    font-size:11px; cursor:pointer; flex-shrink:0;
+  }
+  .resolve-btn:hover{color:var(--gold); border-color:var(--gold);}
+
+  /* ---------- Modal ---------- */
+  .modal-backdrop{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(0,0,0,.6);
+    align-items:center; justify-content:center;
+    z-index:50;
+  }
+  .modal-backdrop.active{display:flex;}
+  .modal{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    width:380px;
+    padding:24px;
+  }
+  .modal h3{font-family:'Bebas Neue', sans-serif; font-size:22px; margin-bottom:16px; letter-spacing:.5px;}
+  .field{margin-bottom:12px;}
+  .field label{display:block; font-size:12px; color:var(--text-dim); margin-bottom:5px;}
+  .field input, .field select{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:8px 10px;
+    border-radius:var(--radius);
+    font-size:13.5px;
+    font-family:inherit;
+  }
+  .modal-actions{display:flex; gap:10px; margin-top:18px; justify-content:flex-end;}
+  .btn-ghost{background:transparent; color:var(--text-dim); border:1px solid var(--border);}
+
+  .empty{padding:32px 20px; text-align:center; color:var(--text-dim); font-size:13.5px;}
+  .loading{padding:32px 20px; text-align:center; color:var(--text-dim); font-size:13.5px;}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">ЖабдықТас<span>қын</span></div>
+  <div class="nav-item active" data-page="dashboard">Басқару тақтасы</div>
+  <div class="nav-item" data-page="suppliers">Жеткізушілер</div>
+  <div class="nav-item" data-page="materials">Материалдар</div>
+  <div class="nav-item" data-page="warehouses">Қоймалар</div>
+  <div class="nav-item" data-page="orders">Тапсырыстар</div>
+  <div class="nav-item" data-page="movements">Қозғалыстар</div>
+  <div class="nav-item" data-page="alerts">Ескертулер</div>
+</nav>
+
+<main>
+
+  <!-- ============ DASHBOARD ============ -->
+  <section class="page active" id="page-dashboard">
+    <h1 class="page-title">Басқару тақтасы</h1>
+    <div class="stats-grid" id="stats-grid">
+      <div class="loading">Жүктелуде...</div>
+    </div>
+    <div class="layout-2col">
+      <div class="panel">
+        <div class="panel-header"><h2>Аз қалдықтағы материалдар</h2></div>
+        <div id="dash-low-stock"><div class="loading">Жүктелуде...</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h2>Белсенді ескертулер</h2></div>
+        <ul class="alert-list" id="dash-alerts"><div class="loading">Жүктелуде...</div></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SUPPLIERS ============ -->
+  <section class="page" id="page-suppliers">
+    <h1 class="page-title">Жеткізушілер</h1>
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Жеткізушілер тізімі</h2>
+        <div style="display:flex; gap:10px;">
+          <input class="search" placeholder="Іздеу..." oninput="filterTable('suppliers-table', this.value)">
+          <button class="btn btn-primary" onclick="openSupplierModal()">+ Жеткізуші қосу</button>
+        </div>
+      </div>
+      <table id="suppliers-table">
+        <thead><tr>
+          <th>Компания</th><th>Байланыс тұлғасы</th><th>Телефон</th><th>Email</th><th></th>
+        </tr></thead>
+        <tbody id="suppliers-body"><tr><td colspan="5" class="loading">Жүктелуде...</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ MATERIALS ============ -->
+  <section class="page" id="page-materials">
+    <h1 class="page-title">Материалдар</h1>
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Материалдар тізімі</h2>
+        <div style="display:flex; gap:10px;">
+          <input class="search" placeholder="Іздеу..." oninput="filterTable('materials-table', this.value)">
+          <button class="btn btn-primary" onclick="openMaterialModal()">+ Материал қосу</button>
+        </div>
+      </div>
+      <table id="materials-table">
+        <thead><tr>
+          <th>Артикул</th><th>Атауы</th><th>Бірлік</th><th>Бағасы (₸)</th>
+          <th>Қалдық</th><th>Жағдай</th><th></th>
+        </tr></thead>
+        <tbody id="materials-body"><tr><td colspan="7" class="loading">Жүктелуде...</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ WAREHOUSES ============ -->
+  <section class="page" id="page-warehouses">
+    <h1 class="page-title">Қоймалар</h1>
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Қойма тізімі</h2>
+        <button class="btn btn-primary" onclick="openWarehouseModal()">+ Қойма қосу</button>
+      </div>
+      <table id="warehouses-table">
+        <thead><tr><th>Атауы</th><th>Орналасуы</th><th></th></tr></thead>
+        <tbody id="warehouses-body"><tr><td colspan="3" class="loading">Жүктелуде...</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ ORDERS ============ -->
+  <section class="page" id="page-orders">
+    <h1 class="page-title">Тапсырыстар</h1>
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Тапсырыстар тізімі</h2>
+        <input class="search" placeholder="Іздеу..." oninput="filterTable('orders-table', this.value)">
+      </div>
+      <table id="orders-table">
+        <thead><tr>
+          <th>№</th><th>Жеткізуші</th><th>Қойма</th><th>Мерзімі</th><th>Мәртебе</th><th></th>
+        </tr></thead>
+        <tbody id="orders-body"><tr><td colspan="6" class="loading">Жүктелуде...</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ MOVEMENTS ============ -->
+  <section class="page" id="page-movements">
+    <h1 class="page-title">Қалдық қозғалыстары</h1>
+    <div class="panel">
+      <div class="panel-header"><h2>Соңғы 50 қозғалыс</h2></div>
+      <table id="movements-table">
+        <thead><tr>
+          <th>Күні</th><th>Материал</th><th>Қойма</th><th>Түрі</th><th>Саны</th><th>Ескертпе</th>
+        </tr></thead>
+        <tbody id="movements-body"><tr><td colspan="6" class="loading">Жүктелуде...</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ ALERTS ============ -->
+  <section class="page" id="page-alerts">
+    <h1 class="page-title">Ескертулер</h1>
+    <div class="panel">
+      <div class="panel-header"><h2>Белсенді ескертулер</h2></div>
+      <ul class="alert-list" id="alerts-body"><div class="loading">Жүктелуде...</div></ul>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============ MODALS ============ -->
+<div class="modal-backdrop" id="supplier-modal">
+  <div class="modal">
+    <h3>Жеткізуші</h3>
+    <input type="hidden" id="sup-id">
+    <div class="field"><label>Компания атауы</label><input id="sup-company"></div>
+    <div class="field"><label>Байланыс тұлғасы</label><input id="sup-contact"></div>
+    <div class="field"><label>Телефон</label><input id="sup-phone"></div>
+    <div class="field"><label>Email</label><input id="sup-email"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('supplier-modal')">Бас тарту</button>
+      <button class="btn btn-primary" onclick="saveSupplier()">Сақтау</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="material-modal">
+  <div class="modal">
+    <h3>Материал</h3>
+    <input type="hidden" id="mat-id">
+    <div class="field"><label>Артикул</label><input id="mat-article"></div>
+    <div class="field"><label>Атауы</label><input id="mat-name"></div>
+    <div class="field"><label>Бірлік</label><input id="mat-unit" placeholder="шт / м / л"></div>
+    <div class="field"><label>Бағасы (₸)</label><input id="mat-price" type="number" step="0.01"></div>
+    <div class="field"><label>Минималды қалдық</label><input id="mat-min" type="number" step="0.01"></div>
+    <div class="field"><label>Ағымдағы қалдық</label><input id="mat-stock" type="number" step="0.01"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('material-modal')">Бас тарту</button>
+      <button class="btn btn-primary" onclick="saveMaterial()">Сақтау</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="warehouse-modal">
+  <div class="modal">
+    <h3>Қойма</h3>
+    <input type="hidden" id="wh-id">
+    <div class="field"><label>Атауы</label><input id="wh-name"></div>
+    <div class="field"><label>Орналасуы</label><input id="wh-location"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('warehouse-modal')">Бас тарту</button>
+      <button class="btn btn-primary" onclick="saveWarehouse()">Сақтау</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = ""; // Flask бірге орналасса бос қалдырыңыз, әйтпесе "http://localhost:5000"
+
+/* ---------------- Navigation ---------------- */
+document.querySelectorAll(".nav-item").forEach(item => {
+  item.addEventListener("click", () => {
+    document.querySelectorAll(".nav-item").forEach(i => i.classList.remove("active"));
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    item.classList.add("active");
+    const page = item.dataset.page;
+    document.getElementById("page-" + page).classList.add("active");
+    loadPage(page);
+  });
+});
+
+function loadPage(page){
+  if(page === "dashboard") loadDashboard();
+  if(page === "suppliers") loadSuppliers();
+  if(page === "materials") loadMaterials();
+  if(page === "warehouses") loadWarehouses();
+  if(page === "orders") loadOrders();
+  if(page === "movements") loadMovements();
+  if(page === "alerts") loadAlerts();
+}
+
+/* ---------------- Client-side search filter ---------------- */
+function filterTable(tableId, term){
+  term = term.toLowerCase();
+  document.querySelectorAll("#" + tableId + " tbody tr").forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(term) ? "" : "none";
+  });
+}
+
+/* ---------------- Dashboard ---------------- */
+async function loadDashboard(){
+  try{
+    const res = await fetch(`${API}/api/dashboard`);
+    const data = await res.json();
+    const s = data.stats;
+    document.getElementById("stats-grid").innerHTML = `
+      <div class="stat-card"><div class="num">${s.materials_count}</div><div class="lbl">Материал</div></div>
+      <div class="stat-card"><div class="num">${s.suppliers_count}</div><div class="lbl">Жеткізуші</div></div>
+      <div class="stat-card"><div class="num">${s.orders_count}</div><div class="lbl">Тапсырыс</div></div>
+      <div class="stat-card warn"><div class="num">${s.pending_count}</div><div class="lbl">Күтуде</div></div>
+      <div class="stat-card danger"><div class="num">${s.low_stock_count}</div><div class="lbl">Аз қалдық</div></div>
+      <div class="stat-card danger"><div class="num">${s.active_alerts_count}</div><div class="lbl">Ескертулер</div></div>`;
+
+    const alertsEl = document.getElementById("dash-alerts");
+    alertsEl.innerHTML = data.recent_alerts.length ? data.recent_alerts.map(a => `
+      <li class="alert-item">
+        <span class="dot ${a.alert_type}"></span>
+        <div>
+          <div class="alert-text">${a.message}</div>
+          <div class="alert-time">${new Date(a.created_at).toLocaleString('kk-KZ')}</div>
+        </div>
+      </li>`).join("") : `<div class="empty">Белсенді ескертулер жоқ</div>`;
+
+    const materials = await (await fetch(`${API}/api/materials`)).json();
+    const low = materials.filter(m => m.current_stock < m.min_stock);
+    document.getElementById("dash-low-stock").innerHTML = low.length ? `
+      <table><tbody>${low.map(m => `
+        <tr><td>${m.material_name}</td><td>${stockBadge(m)}</td></tr>`).join("")}
+      </tbody></table>` : `<div class="empty">Барлық материал жеткілікті</div>`;
+  }catch(e){
+    document.getElementById("stats-grid").innerHTML = `<div class="empty">Деректерді жүктеу қатесі: ${e.message}</div>`;
+  }
+}
+
+/* ---------------- Suppliers ---------------- */
+async function loadSuppliers(){
+  const rows = await (await fetch(`${API}/api/suppliers`)).json();
+  document.getElementById("suppliers-body").innerHTML = rows.length ? rows.map(s => `
+    <tr>
+      <td>${s.company_name}</td>
+      <td>${s.contact_person || "—"}</td>
+      <td>${s.phone || "—"}</td>
+      <td>${s.email ? `<a class="mail" href="mailto:${s.email}">${s.email}</a>` : "—"}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-edit" onclick='openSupplierModal(${JSON.stringify(s)})'>Өңдеу</button>
+        <button class="btn btn-del" onclick="deleteSupplier(${s.supplier_id})">Жою</button>
+      </td>
+    </tr>`).join("") : `<tr><td colspan="5" class="empty">Жеткізушілер жоқ</td></tr>`;
+}
+
+function openSupplierModal(s){
+  document.getElementById("sup-id").value = s ? s.supplier_id : "";
+  document.getElementById("sup-company").value = s ? s.company_name : "";
+  document.getElementById("sup-contact").value = s ? (s.contact_person || "") : "";
+  document.getElementById("sup-phone").value = s ? (s.phone || "") : "";
+  document.getElementById("sup-email").value = s ? (s.email || "") : "";
+  document.getElementById("supplier-modal").classList.add("active");
+}
+
+async function saveSupplier(){
+  const id = document.getElementById("sup-id").value;
+  const body = {
+    company_name: document.getElementById("sup-company").value,
+    contact_person: document.getElementById("sup-contact").value,
+    phone: document.getElementById("sup-phone").value,
+    email: document.getElementById("sup-email").value
+  };
+  const url = id ? `${API}/api/suppliers/${id}` : `${API}/api/suppliers`;
+  await fetch(url, {
+    method: id ? "PUT" : "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(body)
+  });
+  closeModal("supplier-modal");
+  loadSuppliers();
+}
+
+async function deleteSupplier(id){
+  if(!confirm("Жеткізушіні жоюды растайсыз ба?")) return;
+  const res = await fetch(`${API}/api/suppliers/${id}`, {method:"DELETE"});
+  if(!res.ok){
+    const err = await res.json();
+    alert("Жою мүмкін болмады: " + err.error);
+    return;
+  }
+  loadSuppliers();
+}
+
+/* ---------------- Materials ---------------- */
+function stockBadge(m){
+  const low = m.current_stock < m.min_stock;
+  return `<span class="badge ${low ? "low" : "ok"}">${low ? "⚠ Аз" : "✓ Жеткілікті"}</span>`;
+}
+
+function stockBar(m){
+  let cls = "ok";
+  if(m.current_stock < m.min_stock) cls = "low";
+  else if(m.current_stock < m.min_stock * 1.5) cls = "warn";
+  const pct = Math.min(100, (m.current_stock / (m.min_stock * 2 || 1)) * 100);
+  return `<div class="stock-cell">
+      <span>${m.current_stock} ${m.unit}</span>
+      <div class="bar-track"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div>
+    </div>`;
+}
+
+async function loadMaterials(){
+  const rows = await (await fetch(`${API}/api/materials`)).json();
+  document.getElementById("materials-body").innerHTML = rows.length ? rows.map(m => `
+    <tr>
+      <td>${m.article}</td>
+      <td>${m.material_name}</td>
+      <td>${m.unit}</td>
+      <td>${Number(m.unit_price).toLocaleString('kk-KZ')}</td>
+      <td>${stockBar(m)}</td>
+      <td>${stockBadge(m)}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-edit" onclick='openMaterialModal(${JSON.stringify(m)})'>Өңдеу</button>
+        <button class="btn btn-del" onclick="deleteMaterial(${m.material_id})">Жою</button>
+      </td>
+    </tr>`).join("") : `<tr><td colspan="7" class="empty">Материалдар жоқ</td></tr>`;
+}
+
+function openMaterialModal(m){
+  document.getElementById("mat-id").value = m ? m.material_id : "";
+  document.getElementById("mat-article").value = m ? m.article : "";
+  document.getElementById("mat-name").value = m ? m.material_name : "";
+  document.getElementById("mat-unit").value = m ? m.unit : "";
+  document.getElementById("mat-price").value = m ? m.unit_price : "";
+  document.getElementById("mat-min").value = m ? m.min_stock : 0;
+  document.getElementById("mat-stock").value = m ? m.current_stock : 0;
+  document.getElementById("material-modal").classList.add("active");
+}
+
+async function saveMaterial(){
+  const id = document.getElementById("mat-id").value;
+  const body = {
+    article: document.getElementById("mat-article").value,
+    material_name: document.getElementById("mat-name").value,
+    unit: document.getElementById("mat-unit").value,
+    unit_price: parseFloat(document.getElementById("mat-price").value) || 0,
+    min_stock: parseFloat(document.getElementById("mat-min").value) || 0,
+    current_stock: parseFloat(document.getElementById("mat-stock").value) || 0
+  };
+  const url = id ? `${API}/api/materials/${id}` : `${API}/api/materials`;
+  await fetch(url, {
+    method: id ? "PUT" : "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(body)
+  });
+  closeModal("material-modal");
+  loadMaterials();
+}
+
+async function deleteMaterial(id){
+  if(!confirm("Материалды жоюды растайсыз ба?")) return;
+  await fetch(`${API}/api/materials/${id}`, {method:"DELETE"});
+  loadMaterials();
+}
+
+/* ---------------- Warehouses ---------------- */
+async function loadWarehouses(){
+  const rows = await (await fetch(`${API}/api/warehouses`)).json();
+  document.getElementById("warehouses-body").innerHTML = rows.length ? rows.map(w => `
+    <tr>
+      <td>${w.warehouse_name}</td>
+      <td>${w.location || "—"}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-edit" onclick='openWarehouseModal(${JSON.stringify(w)})'>Өңдеу</button>
+        <button class="btn btn-del" onclick="deleteWarehouse(${w.warehouse_id})">Жою</button>
+      </td>
+    </tr>`).join("") : `<tr><td colspan="3" class="empty">Қоймалар жоқ</td></tr>`;
+}
+
+function openWarehouseModal(w){
+  document.getElementById("wh-id").value = w ? w.warehouse_id : "";
+  document.getElementById("wh-name").value = w ? w.warehouse_name : "";
+  document.getElementById("wh-location").value = w ? (w.location || "") : "";
+  document.getElementById("warehouse-modal").classList.add("active");
+}
+
+async function saveWarehouse(){
+  const id = document.getElementById("wh-id").value;
+  const body = {
+    warehouse_name: document.getElementById("wh-name").value,
+    location: document.getElementById("wh-location").value
+  };
+  const url = id ? `${API}/api/warehouses/${id}` : `${API}/api/warehouses`;
+  await fetch(url, {
+    method: id ? "PUT" : "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(body)
+  });
+  closeModal("warehouse-modal");
+  loadWarehouses();
+}
+
+async function deleteWarehouse(id){
+  if(!confirm("Қойманы жоюды растайсыз ба?")) return;
+  await fetch(`${API}/api/warehouses/${id}`, {method:"DELETE"});
+  loadWarehouses();
+}
+
+/* ---------------- Orders ---------------- */
+const statusLabel = {draft:"Жоба", confirmed:"Расталды", received:"Алынды", cancelled:"Болдырылмады"};
+
+async function loadOrders(){
+  const rows = await (await fetch(`${API}/api/orders`)).json();
+  document.getElementById("orders-body").innerHTML = rows.length ? rows.map(o => `
+    <tr>
+      <td>${o.order_number}</td>
+      <td>${o.company_name}</td>
+      <td>${o.warehouse_name}</td>
+      <td>${o.expected_date || "—"}</td>
+      <td><span class="badge status-${o.status}">${statusLabel[o.status]}</span></td>
+      <td style="white-space:nowrap;">
+        ${o.status !== "received" ? `<button class="btn btn-primary" onclick="markReceived(${o.order_id})">Алынды деп белгілеу</button>` : ""}
+      </td>
+    </tr>`).join("") : `<tr><td colspan="6" class="empty">Тапсырыстар жоқ</td></tr>`;
+}
+
+async function markReceived(id){
+  await fetch(`${API}/api/orders/${id}`, {
+    method: "PUT",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({status: "received"})
+  });
+  loadOrders();
+}
+
+/* ---------------- Movements ---------------- */
+async function loadMovements(){
+  const rows = await (await fetch(`${API}/api/movements`)).json();
+  const typeLabel = {receipt:"Түсім", issue:"Шығыс", adjustment:"Түзету"};
+  document.getElementById("movements-body").innerHTML = rows.length ? rows.map(m => `
+    <tr>
+      <td>${new Date(m.moved_at).toLocaleString('kk-KZ')}</td>
+      <td>${m.material_name}</td>
+      <td>${m.warehouse_name}</td>
+      <td>${typeLabel[m.move_type] || m.move_type}</td>
+      <td>${m.quantity}</td>
+      <td>${m.notes || "—"}</td>
+    </tr>`).join("") : `<tr><td colspan="6" class="empty">Қозғалыстар жоқ</td></tr>`;
+}
+
+/* ---------------- Alerts ---------------- */
+async function loadAlerts(){
+  const rows = await (await fetch(`${API}/api/alerts`)).json();
+  document.getElementById("alerts-body").innerHTML = rows.length ? rows.map(a => `
+    <li class="alert-item">
+      <span class="dot ${a.alert_type}"></span>
+      <div>
+        <div class="alert-text">${a.message}</div>
+        <div class="alert-time">${new Date(a.created_at).toLocaleString('kk-KZ')}</div>
+      </div>
+      <button class="resolve-btn" onclick="resolveAlert(${a.alert_id})">Шешілді деп белгілеу</button>
+    </li>`).join("") : `<div class="empty">Белсенді ескертулер жоқ</div>`;
+}
+
+async function resolveAlert(id){
+  await fetch(`${API}/api/alerts/${id}/resolve`, {method:"PUT"});
+  loadAlerts();
+}
+
+/* ---------------- Modal helpers ---------------- */
+function closeModal(id){
+  document.getElementById(id).classList.remove("active");
+}
+document.querySelectorAll(".modal-backdrop").forEach(bd => {
+  bd.addEventListener("click", e => { if(e.target === bd) bd.classList.remove("active"); });
+});
+
+/* ---------------- Init ---------------- */
+loadDashboard();
+</script>
+</body>
+</html>
